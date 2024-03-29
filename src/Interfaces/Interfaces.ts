@@ -47,8 +47,7 @@ export interface I5DayForecast {
     cod: string,
     message: number,
     cnt: number,
-    list: [
-        {
+    list: [{
             dt: number,
             main: {
                 temp: number,
