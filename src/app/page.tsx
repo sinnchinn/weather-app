@@ -171,7 +171,6 @@ export default function Home() {
             <p className="text-center"> Lo: 60°</p>
           </div>
 
-
           {/* <div className="bg-mainBg rounded-2xl w-48 p-2">
             <p className="text-center text-2xl font-extrabold"> {dayDos} </p>
 
