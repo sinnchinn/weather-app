@@ -19,19 +19,7 @@ export default function Home() {
   const [currentLoc, setCurrentLoc] = useState<ICurrentWeather | null>(null);
   const [fiveDay, setFiveDay] = useState<I5DayForecast>();
   const [dayUno, setDayUno] = useState<string>("");
-  const [dayDos, setDayDos] = useState<string>("");
-  const [dayTres, setDayTres] = useState<string>("");
-  const [dayQuad, setDayQuad] = useState<string>("");
-  const [dayCinco, setDayCinco] = useState<string>("");
-  const [oneMax, setOneMax] = useState<number>(0);
-  const [twoMax, setTwoMax] = useState<number>(0);
-  const [threeMax, setThreeMax] = useState<number>(0);
-  const [fourMax, setFourMax] = useState<number>(0);
-  const [fiveMax, setFiveMax] = useState<number>(0);
-
   
-
-
 
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {
@@ -40,140 +28,58 @@ export default function Home() {
     day: 'numeric'
   });
 
+  const fetchData = async (latitude: number, longitude: number) => {
+    const data = await currentWeather(latitude, longitude);
+    const dataFive = await fiveDayFore(latitude, longitude)
+
+    setCurrentLoc(data);
+    setFiveDay(dataFive);
+
+    console.log(data);
+    console.log(dataFive);
+  }
+
+
+  const current = async () => {
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const {latitude, longitude} = position.coords;
+        
+        await fetchData(latitude, longitude);
+        
+      }, function(error) {
+        console.error("Error getting geolocation:", error);
+      });
+    } else {
+      console.error("Geolocation is not supported by this browser.");
+    }
+  }
+
 
   useEffect(() => {
 
-    const current = async () => {
-
-      const getCurrent = () => {
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(async (position) => {
-            const { latitude, longitude } = position.coords;
-            const data = await currentWeather(latitude, longitude)
-            const dataFive = await fiveDayFore(latitude, longitude);
-            setCurrentLoc(data);
-            setFiveDay(dataFive);
-            console.log(dataFive);
-          
-            const getDate1 = () => {
-              let dayValue = dataFive.list[0].dt_txt;
-
-              dayValue = dayValue.slice(0, 10)
-              const newDate = new Date(dayValue); 
-              const newerDate = newDate.getDay() + 1;
-
-              const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-
-              const fixedDate = dayNames[newerDate]
-              setDayUno(fixedDate);
-              
-          }
-
-            getDate1();
-
-            
-
-          //   const getDate3 = () => {
-          //     let dayValue = dataFive.list[16].dt_txt;
-
-          //     dayValue = dayValue.slice(0, 10)
-          //     const newDate = new Date(dayValue); 
-          //     let newerDate = newDate.getDay() + 1;
-          //     if (newerDate === 7) newerDate = 0; 
-
-          //     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-          //     const fixedDate = dayNames[newerDate]
-          //     console.log(fixedDate);
-          //     setDayTres(fixedDate);
-          // }
-
-          //   getDate3();
-
-          //   const getDate4 = () => {
-          //     let dayValue = dataFive.list[24].dt_txt;
-
-          //     dayValue = dayValue.slice(0, 10)
-          //     const newDate = new Date(dayValue); 
-          //     let newerDate = newDate.getDay() + 1;
-          //     if (newerDate === 7) newerDate = 0; 
-
-          //     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-          //     const fixedDate = dayNames[newerDate]
-          //     setDayQuad(fixedDate);
-          //   }
-
-          //   getDate4();
-
-          //   const getDate5 = () => {
-          //     let dayValue = dataFive.list[32].dt_txt;
-
-          //     dayValue = dayValue.slice(0, 10)
-          //     const newDate = new Date(dayValue); 
-          //     let newerDate = newDate.getDay() + 1;
-          //     if (newerDate === 7) newerDate = 0; 
-
-          //     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-          //     const fixedDate = dayNames[newerDate]
-          //     setDayCinco(fixedDate);
-          //   }
-
-          //   getDate5();
-
-
-            // five day max temp
-            // let dayOne = Math.round(dataFive.list[0].main.temp);
-            // setOneMax(dayOne);
-
-            // let dayTwo = Math.round(dataFive.list[8].main.temp);
-            // setTwoMax(dayTwo);
-
-            // let dayThree = Math.round(dataFive.list[16].main.temp);
-            // setThreeMax(dayThree);
-
-            // let dayFour = Math.round(dataFive.list[24].main.temp);
-            // setFourMax(dayFour);
-
-            // let dayFive = Math.round(dataFive.list[32].main.temp);
-            // setFiveMax(dayFive);
-
-            
-          });
-          
-        } else {
-          alert("geolocation error!")
-        }
-      }
-
-      getCurrent();
-      
-    }
-
     current();
-    
 
   }, [])
 
-  
 
-  const fiveDay2 = async (lat: number, lon: number) => {
-    const dataFive = await fiveDayFore(lat, lon);
-    
 
-    let dayData: weatherData[] = dataFive.list.map(date => {
-      return ({
-        date: date.dt_txt.slice(0, 10),
-        max: date.main.temp_max,
-        min: date.main.temp_min,
-        icon: date.weather[0].icon
-      })
-    })
-  }
+  // const fiveDay2 = async (lat: number, lon: number) => {
+  //   const dataFive = await fiveDayFore(lat, lon);
 
-   
+
+  //   let dayData: weatherData[] = dataFive.list.map(date => {
+  //     return ({
+  //       date: date.dt_txt.slice(0, 10),
+  //       max: date.main.temp_max,
+  //       min: date.main.temp_min,
+  //       icon: date.weather[0].icon
+  //     })
+  //   })
+  // }
+
+
 
   return (
     <div className="bg-weather-bg bg-cover bg-center w-screen h-screen flex font-mainFont">
@@ -255,17 +161,17 @@ export default function Home() {
 
 
           <div className="bg-mainBg rounded-2xl w-48 p-2">
-          <p className="text-center text-2xl font-extrabold"> {dayUno} </p>
+            <p className="text-center text-2xl font-extrabold"> {dayUno} </p>
 
-          <div className="flex justify-center">
-            <img className="" src={'https://openweathermap.org/img/wn/' + fiveDay?.list[0].weather[0].icon + '@2x.png'} />
+            <div className="flex justify-center">
+              <img className="" src={'https://openweathermap.org/img/wn/' + fiveDay?.list[0].weather[0].icon + '@2x.png'} />
+            </div>
+
+            <p className="text-center">Hi: {fiveDay && fiveDay?.list[8].main.temp_max} </p>
+            <p className="text-center"> Lo: 60°</p>
           </div>
 
-          <p className="text-center">Hi: {fiveDay?.list[0].main.temp_max} </p>
-          <p className="text-center"> Lo: 60°</p>
-        </div>
-        
-          
+
           {/* <div className="bg-mainBg rounded-2xl w-48 p-2">
             <p className="text-center text-2xl font-extrabold"> {dayDos} </p>
 
