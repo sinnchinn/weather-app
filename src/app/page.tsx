@@ -1,25 +1,17 @@
 'use client'
-import { currentWeather, fiveDayFore } from "@/DataServices/DataServices";
-import { I5DayForecast, ICurrentWeather } from "@/Interfaces/Interfaces";
-import FiveDayComponent from "@/components/FiveDayComponent";
+import { currentWeather, fiveDayFore, cityApi } from "@/DataServices/DataServices";
+import { I5DayForecast, ICity, ICurrentWeather } from "@/Interfaces/Interfaces";
 import { TextInput } from "flowbite-react"
-import Image from "next/image";
-import { format } from "path";
 import { use, useEffect, useState } from "react";
 
-type weatherData = {
-  date: string
-  max: number
-  min: number
-  icon: string
-}
+// notes: could not figure out what was wrong with my interface. received help from isaiah who could also not figure out why, was told to pu my list to type any. that was the only way i could access any other index besides 0. anything other than that would be possibly undefined, even though we know that there was data showing in the console.
 
 export default function Home() {
 
   const [currentLoc, setCurrentLoc] = useState<ICurrentWeather | null>(null);
   const [fiveDay, setFiveDay] = useState<I5DayForecast>();
-  const [dayUno, setDayUno] = useState<string>("");
-  
+  const [search, setSearch] = useState<string>("");
+
 
   const currentDate = new Date();
   const formattedDate = currentDate.toLocaleDateString('en-US', {
@@ -27,6 +19,45 @@ export default function Home() {
     month: 'long',
     day: 'numeric'
   });
+
+  const getDays = (date: string) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const dayFunc = new Date(date).getDay();
+    return days[dayFunc];
+  }
+
+  const getFirst = (list: any[]): any[] => {
+    const firstForecasts: any[] = [];
+    let prevDay = '';
+
+    list.forEach((day: any) => {
+      const dayOfWeek = new Date(day.dt_txt).toLocaleDateString('en-US', { weekday: 'long' });
+      if (dayOfWeek !== prevDay) {
+        firstForecasts.push(day);
+        prevDay = dayOfWeek;
+      }
+    });
+
+    return firstForecasts;
+  };
+
+  const handleSearch = async (cityName: string) => {
+  
+      const cities: ICity[] = await cityApi(cityName);
+
+      if (cities.length > 0) {
+        const city: ICity = cities[0];
+        const getCurrent = await currentWeather(city.lat, city.lon);
+        const getFive = await fiveDayFore(city.lat, city.lon);
+
+        setCurrentLoc(getCurrent);
+        setFiveDay(getFive);
+      } else {
+        console.log("No matching cities found");
+      }
+
+  }
+
 
   const fetchData = async (latitude: number, longitude: number) => {
     const data = await currentWeather(latitude, longitude);
@@ -44,11 +75,11 @@ export default function Home() {
 
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (position) => {
-        const {latitude, longitude} = position.coords;
-        
+        const { latitude, longitude } = position.coords;
+
         await fetchData(latitude, longitude);
-        
-      }, function(error) {
+
+      }, function (error) {
         console.error("Error getting geolocation:", error);
       });
     } else {
@@ -64,23 +95,6 @@ export default function Home() {
   }, [])
 
 
-
-  // const fiveDay2 = async (lat: number, lon: number) => {
-  //   const dataFive = await fiveDayFore(lat, lon);
-
-
-  //   let dayData: weatherData[] = dataFive.list.map(date => {
-  //     return ({
-  //       date: date.dt_txt.slice(0, 10),
-  //       max: date.main.temp_max,
-  //       min: date.main.temp_min,
-  //       icon: date.weather[0].icon
-  //     })
-  //   })
-  // }
-
-
-
   return (
     <div className="bg-weather-bg bg-cover bg-center w-screen h-screen flex font-mainFont">
 
@@ -94,7 +108,11 @@ export default function Home() {
 
       <div style={{ width: '68%' }} className="flex flex-col">
         <div className="flex justify-center p-10 ">
-          <TextInput className="w-72" />
+          <TextInput onKeyDown={(e) => {
+            if(e.key === "Enter"){
+              {handleSearch(search)}
+            }
+          }} onChange={(e) => setSearch(e.target.value)} className="w-72" />
         </div>
 
         {/* city name and favorite button */}
@@ -159,62 +177,20 @@ export default function Home() {
         {/* 5 day cards */}
         <div className="grid grid-cols-5 text-white mt-5">
 
+        {getFirst(fiveDay?.list || []).map((day: any, index: number) => (index !== 0 && (
 
-          <div className="bg-mainBg rounded-2xl w-48 p-2">
-            <p className="text-center text-2xl font-extrabold"> {dayUno} </p>
+            <div key={index} className="bg-mainBg rounded-2xl w-48 p-2">
+              <p className="text-center text-2xl font-extrabold"> {getDays(day.dt_txt)} </p>
 
-            <div className="flex justify-center">
-              <img className="" src={'https://openweathermap.org/img/wn/' + fiveDay?.list[0].weather[0].icon + '@2x.png'} />
+              <div className="flex justify-center">
+                <img className="" src={'https://openweathermap.org/img/wn/' + day.weather[0].icon + '@2x.png'} />
+              </div>
+
+              <p className="text-center">Hi: {Math.round(day.main.temp_max)}° </p>
+              <p className="text-center"> Lo: {Math.round(day.main.temp_min)}° </p>
             </div>
 
-            <p className="text-center">Hi: {fiveDay && fiveDay?.list[8].main.temp_max} </p>
-            <p className="text-center"> Lo: 60°</p>
-          </div>
-
-          {/* <div className="bg-mainBg rounded-2xl w-48 p-2">
-            <p className="text-center text-2xl font-extrabold"> {dayDos} </p>
-
-            <div className="flex justify-center">
-              <img className="" src={'https://openweathermap.org/img/wn/' + fiveDay?.list[0].weather[0].icon + '@2x.png'} />
-            </div>
-
-            <p className="text-center"> Hi: </p>
-            <p className="text-center"> Lo: 60°</p>
-          </div>
-
-          <div className="bg-mainBg rounded-2xl w-48 p-2">
-            <p className="text-center text-2xl font-extrabold"> {dayTres} </p>
-
-            <div className="flex justify-center">
-              <img className="w-28 h-28" src="/cloudy.png" />
-            </div>
-
-            <p className="text-center"> Hi: </p>
-            <p className="text-center"> Lo: 60°</p>
-          </div>
-
-          <div className="bg-mainBg rounded-2xl w-48 p-2">
-            <p className="text-center text-2xl font-extrabold"> {dayQuad} </p>
-
-            <div className="flex justify-center">
-              <img className="w-28 h-28" src="/cloudy.png" />
-            </div>
-
-            <p className="text-center"> Hi: </p>
-            <p className="text-center"> Lo: 60°</p>
-          </div>
-
-          <div className="bg-mainBg rounded-2xl w-48 p-2">
-            <p className="text-center text-2xl font-extrabold"> {dayCinco} </p>
-
-            <div className="flex justify-center">
-              <img className="w-28 h-28" src="/cloudy.png" />
-            </div>
-
-            <p className="text-center"> Hi: </p>
-            <p className="text-center"> Lo: 60°</p>
-          </div> */}
-
+          )))}
 
         </div>
       </div>

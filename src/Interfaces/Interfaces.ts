@@ -97,3 +97,12 @@ export interface I5DayForecast {
     }
 }
 
+export interface ICity {
+    country: string
+    lat: number
+    local_names?: {}
+    lon: number
+    name: string
+    state: string
+}
+
